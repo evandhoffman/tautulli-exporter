@@ -275,6 +275,8 @@ See [docs/tautulli_api.md](../docs/tautulli_api.md) for complete API documentati
 - [ ] Grafana dashboard JSON
 - [ ] Helm chart (optional)
 
+**Dashboard Sync:** When adding, renaming, or removing exporter metrics, update `tautulli-dashboard.json` to reflect the new metric names and label usage. Keep dashboard queries and panel IDs consistent with metric names; include a quick example of new queries in the PR description so reviewers can verify visualizations.
+
 ---
 
 ## Dependencies
