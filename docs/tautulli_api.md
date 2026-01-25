@@ -183,6 +183,14 @@ Returns: Array with:
 - `tautulli_library_watch_time_seconds` (gauge, labels: library_name, period)
 - `tautulli_library_plays` (gauge, labels: library_name, period)
 
+### Per-item and Per-show Watch Time
+
+The exporter can collect detailed watch-time metrics per media item (episodes/movies) and aggregated per-show totals. These are implemented by querying media info for libraries and then requesting per-item watch-time stats. Be aware this can be API-heavy on large libraries; control via configuration (`COLLECT_WATCH_TIME_STATS`, `WATCH_TIME_MAX_ITEMS`).
+
+**Metrics**:
+- `tautulli_item_watch_seconds{rating_key,title,media_type,library_name}`: Total seconds watched for individual media items (episodes or movies).
+- `tautulli_show_watch_seconds{show_rating_key,show_title,media_type,library_name}`: Aggregated total seconds watched per show (episodes summed) or per-movie.
+
 ---
 
 ### 4. User Statistics

@@ -65,6 +65,8 @@ tautulli-exporter/
 | `LOG_LEVEL` | No | `INFO` | Logging level (DEBUG, INFO, WARN, ERROR) |
 | `COLLECT_USER_STATS` | No | `true` | Enable per-user metrics |
 | `COLLECT_LIBRARY_STATS` | No | `true` | Enable per-library metrics |
+| `COLLECT_WATCH_TIME_STATS` | No | `true` | Enable per-item watch-time metrics (may be API-heavy) |
+| `WATCH_TIME_MAX_ITEMS` | No | `500` | Maximum items to query when collecting watch-time stats |
 
 ---
 
@@ -96,6 +98,7 @@ tautulli_pms_info{name,version}       # Plex server info
 # Counter metrics (cumulative)
 tautulli_plays_total{library,type}    # Total plays
 tautulli_watch_seconds_total{library} # Total watch time
+tautulli_item_watch_seconds{rating_key,title,media_type,library_name} # Seconds watched per item (episode/movie)
 ```
 
 ### Stream Detail Metrics (per-session labels)

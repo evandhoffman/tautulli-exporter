@@ -14,6 +14,7 @@ from .collectors import (
     LibraryCollector,
     ServerCollector,
     UserCollector,
+    WatchTimeCollector,
 )
 from .config import Settings, get_settings
 from .metrics import EXPORTER_UP
@@ -59,6 +60,9 @@ class TautulliExporter:
         if self.settings.collect_user_stats:
             collectors.append(UserCollector(self.client))
 
+        if self.settings.collect_watch_time_stats:
+            collectors.append(WatchTimeCollector(self.client, max_items=self.settings.watch_time_max_items))
+
         return collectors
 
     async def collect_all(self) -> None:
@@ -79,7 +83,9 @@ class TautulliExporter:
 
         # Stats collection (lower frequency)
         stats_collectors = [
-            c for c in self._collectors if c.name in ("server", "libraries", "users")
+            c
+            for c in self._collectors
+            if c.name in ("server", "libraries", "users", "watch_time")
         ]
         if stats_collectors:
             stats_task = asyncio.create_task(

@@ -54,6 +54,15 @@ class Settings(BaseSettings):
         default=True,
         description="Enable per-library metrics collection",
     )
+    collect_watch_time_stats: bool = Field(
+        default=True,
+        description="Enable per-item/show watch time metrics collection (may be heavy)",
+    )
+    watch_time_max_items: int = Field(
+        default=500,
+        description="Maximum number of items to process for watch time collection",
+        ge=1,
+    )
 
     # Collection intervals (in seconds)
     activity_collection_interval: int = Field(

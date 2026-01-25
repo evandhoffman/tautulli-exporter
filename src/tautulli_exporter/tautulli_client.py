@@ -288,3 +288,57 @@ class TautulliClient:
         if user_id:
             params["user_id"] = user_id
         return await self._request("get_history", **params)
+
+    async def get_library_media_info(
+        self,
+        section_id: str | None = None,
+        rating_key: str | None = None,
+        section_type: str | None = None,
+        order_column: str | None = None,
+        order_dir: str | None = None,
+        start: int | None = None,
+        length: int | None = None,
+        search: str | None = None,
+    ) -> dict[str, Any]:
+        """Get the data on the Tautulli media info tables.
+
+        This wraps the `get_library_media_info` API command and accepts
+        common filtering parameters.
+        """
+        params: dict[str, Any] = {}
+        if section_id is not None:
+            params["section_id"] = section_id
+        if rating_key is not None:
+            params["rating_key"] = rating_key
+        if section_type is not None:
+            params["section_type"] = section_type
+        if order_column is not None:
+            params["order_column"] = order_column
+        if order_dir is not None:
+            params["order_dir"] = order_dir
+        if start is not None:
+            params["start"] = start
+        if length is not None:
+            params["length"] = length
+        if search is not None:
+            params["search"] = search
+
+        return await self._request("get_library_media_info", **params)
+
+    async def get_item_watch_time_stats(
+        self, rating_key: str, media_type: str | None = None, query_days: str = "0"
+    ) -> list[dict[str, Any]]:
+        """Get watch time stats for a media item (episode/show).
+
+        Args:
+            rating_key: Rating key of the item.
+            media_type: Optional media type for collection items.
+            query_days: Comma-separated days to query (default "0" for all time).
+
+        Returns:
+            List of stats dicts with query_days, total_plays, total_time.
+        """
+        params: dict[str, Any] = {"rating_key": rating_key, "query_days": query_days}
+        if media_type is not None:
+            params["media_type"] = media_type
+        return await self._request("get_item_watch_time_stats", **params)

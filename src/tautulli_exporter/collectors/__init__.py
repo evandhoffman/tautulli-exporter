@@ -5,6 +5,7 @@ from .base import BaseCollector
 from .libraries import LibraryCollector
 from .server import ServerCollector
 from .users import UserCollector
+from .watch_time import WatchTimeCollector
 
 __all__ = [
     "BaseCollector",
@@ -12,4 +13,5 @@ __all__ = [
     "LibraryCollector",
     "ServerCollector",
     "UserCollector",
+    "WatchTimeCollector",
 ]

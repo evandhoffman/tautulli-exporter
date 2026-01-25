@@ -142,6 +142,22 @@ USER_LAST_SEEN = Gauge(
 )
 
 # =============================================================================
+# Item / Show watch time
+# =============================================================================
+
+ITEM_WATCH_SECONDS = Gauge(
+    "tautulli_item_watch_seconds",
+    "Total seconds watched for a media item (episodes/shows)",
+    ["rating_key", "title", "media_type", "library_name"],
+)
+
+SHOW_WATCH_SECONDS = Gauge(
+    "tautulli_show_watch_seconds",
+    "Total seconds watched aggregated per show or movie",
+    ["show_rating_key", "show_title", "media_type", "library_name"],
+)
+
+# =============================================================================
 # Scrape Metrics
 # =============================================================================
 
