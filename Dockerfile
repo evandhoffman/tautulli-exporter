@@ -26,8 +26,12 @@ COPY --from=builder /root/.local /home/appuser/.local
 # Make sure scripts in .local are usable
 ENV PATH=/home/appuser/.local/bin:$PATH
 
-# Copy application code
-COPY src/ ./src/
+
+# Copy application code to /app/tautulli_exporter
+COPY src/tautulli_exporter/ ./tautulli_exporter/
+
+# Set PYTHONPATH so /app is on the module search path
+ENV PYTHONPATH=/app
 
 # Change ownership to appuser
 RUN chown -R appuser:appuser /app
