@@ -1,0 +1,46 @@
+{
+  "annotations": {"list": [{"builtIn": 1, "datasource": {"uid": "-- Grafana --", "type": "grafana"}, "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard"}]},
+  "description": "Grafana dashboard for Tautulli metrics (Prometheus)",
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {"collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}, "id": 1, "panels": [], "title": "🎬 Tautulli Overview", "type": "row"},
+
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 4, "w": 6, "x": 0, "y": 1}, "id": 2, "options": {"minVizHeight": 75}, "pluginVersion": "12.3.1", "targets": [{"expr": "tautulli_streams_count", "legendFormat": "Active Streams", "refId": "A"}], "title": "Active Streams", "type": "gauge"},
+
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 4, "w": 6, "x": 6, "y": 1}, "id": 3, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "tautulli_streams_by_type{type=\"direct_play\"}", "legendFormat": "direct_play", "refId": "A"}, {"expr": "tautulli_streams_by_type{type=\"direct_stream\"}", "legendFormat": "direct_stream", "refId": "B"}, {"expr": "tautulli_streams_by_type{type=\"transcode\"}", "legendFormat": "transcode", "refId": "C"}], "title": "Streams by Type", "type": "timeseries"},
+
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 4, "w": 6, "x": 12, "y": 1}, "id": 4, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "tautulli_bandwidth_kbps{location=\"total\"}", "legendFormat": "Total bandwidth (kbps)", "refId": "A"}], "title": "Total Bandwidth (kbps)", "type": "stat"},
+
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 6, "w": 12, "x": 0, "y": 5}, "id": 5, "options": {"legend": {"showLegend": true}}, "pluginVersion": "12.3.1", "targets": [{"expr": "tautulli_bandwidth_kbps{location=~\"total|lan|wan\"}", "legendFormat": "{{location}}", "refId": "A"}], "title": "Bandwidth Over Time (kbps)", "type": "timeseries"},
+
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 6, "w": 12, "x": 12, "y": 5}, "id": 6, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "tautulli_stream_info", "legendFormat": "{{user}} - {{title}}", "refId": "A"}], "title": "Active Sessions (labels: user,title,state,transcode_decision,platform,library)", "type": "table"},
+
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 5, "w": 12, "x": 0, "y": 11}, "id": 7, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "topk(10, tautulli_library_plays_total)", "legendFormat": "{{library_name}}", "refId": "A"}], "title": "Top Libraries (plays)", "type": "table"},
+
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 5, "w": 12, "x": 12, "y": 11}, "id": 8, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "topk(10, tautulli_user_plays_total)", "legendFormat": "{{user}}", "refId": "A"}], "title": "Top Users (plays)", "type": "table"},
+
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 3, "w": 6, "x": 0, "y": 17}, "id": 9, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "tautulli_up", "legendFormat": "Exporter Up", "refId": "A"}], "title": "Exporter Up", "type": "stat"},
+
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 3, "w": 6, "x": 6, "y": 17}, "id": 10, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "tautulli_server_connected", "legendFormat": "Plex Connected", "refId": "A"}], "title": "Plex Connected", "type": "stat"},
+
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 3, "w": 12, "x": 12, "y": 17}, "id": 11, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "tautulli", "legendFormat": "tautulli info", "refId": "A"}, {"expr": "tautulli_pms", "legendFormat": "pms info", "refId": "B"}], "title": "Tautulli / PMS Info (labels)", "type": "table"}
+  },
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 6, "w": 12, "x": 0, "y": 20}, "id": 12, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "topk(20, tautulli_item_watch_seconds)", "legendFormat": "{{title}} ({{library_name}})", "refId": "A"}], "title": "Top Watched Items (seconds)", "type": "table"},
+
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 6, "w": 12, "x": 12, "y": 20}, "id": 13, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "topk(20, tautulli_show_watch_seconds)", "legendFormat": "{{show_title}} ({{library_name}})", "refId": "A"}], "title": "Top Watched Shows (seconds)", "type": "table"}
+  ],
+  "refresh": "30s",
+  "schemaVersion": 42,
+  "style": "dark",
+  "tags": ["tautulli","plex","monitoring"],
+  "templating": {"list": [{"current": {"text": "Prometheus", "value": "prometheus"}, "hide": 0, "label": "Datasource", "name": "datasource", "query": "prometheus", "type": "datasource"}]},
+  "time": {"from": "now-6h", "to": "now"},
+  "timepicker": {},
+  "title": "Tautulli Dashboard",
+  "uid": "tautulli-dashboard",
+  "version": 1
+}

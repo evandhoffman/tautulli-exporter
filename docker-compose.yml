@@ -1,0 +1,25 @@
+services:
+  tautulli-exporter:
+    build: .
+    container_name: tautulli-exporter
+    ports:
+      - "9487:9487"
+    environment:
+      - TAUTULLI_URL=${TAUTULLI_URL:-http://tautulli:8181}
+      - TAUTULLI_API_KEY=${TAUTULLI_API_KEY}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - COLLECT_USER_STATS=${COLLECT_USER_STATS:-true}
+      - COLLECT_LIBRARY_STATS=${COLLECT_LIBRARY_STATS:-true}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:9487/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge
