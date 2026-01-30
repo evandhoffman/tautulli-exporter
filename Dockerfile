@@ -34,7 +34,7 @@ COPY src/tautulli_exporter/ ./tautulli_exporter/
 ENV PYTHONPATH=/app
 
 # Change ownership to appuser
-RUN chown -R appuser:appuser /app
+RUN chown -R appuser:appuser /app /home/appuser/.local
 
 # Switch to non-root user
 USER appuser
