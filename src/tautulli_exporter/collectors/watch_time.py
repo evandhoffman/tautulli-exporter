@@ -3,7 +3,11 @@
 import logging
 from typing import Any
 
-from ..metrics import ITEM_WATCH_SECONDS, SHOW_WATCH_SECONDS
+from ..metrics import (
+    ITEM_WATCH_SECONDS,
+    SHOW_WATCH_SECONDS,
+    EPISODE_WATCH_SECONDS,
+)
 from ..tautulli_client import TautulliClient
 from .base import BaseCollector
 
@@ -96,7 +100,7 @@ class WatchTimeCollector(BaseCollector):
                 if media_type == "show":
                     # Drill down into show -> seasons -> episodes
                     await self._process_show(
-                        rating_key, title, library_name, show_totals
+                        rating_key, title, library_name, section_id, show_totals
                     )
                 # Process the item itself (show, movie, episode)
                 await self._process_item(
@@ -105,6 +109,7 @@ class WatchTimeCollector(BaseCollector):
                     title,
                     media_type,
                     library_name,
+                    section_id,
                     show_totals,
                 )
 
@@ -145,6 +150,7 @@ class WatchTimeCollector(BaseCollector):
         show_rating_key: str,
         show_title: str,
         library_name: str,
+        section_id: str,
         show_totals: dict[tuple[str, str, str, str], int],
     ) -> None:
         """Drill down into a show to get episode watch times."""
@@ -268,13 +274,27 @@ class WatchTimeCollector(BaseCollector):
                     except Exception:
                         total_seconds = 0
 
-                # Set per-episode metric
+                # Set per-episode metric (item-level)
                 ITEM_WATCH_SECONDS.labels(
                     rating_key=episode_rating_key,
                     title=episode_title[:100],
                     media_type="episode",
                     library_name=library_name,
                 ).set(total_seconds)
+
+                # Set explicit episode metric with richer labels
+                try:
+                    EPISODE_WATCH_SECONDS.labels(
+                        library_name=library_name,
+                        rating_key=episode_rating_key,
+                        title=episode_title[:100],
+                        parent_title=season_title[:100],
+                        grandparent_title=show_title[:100],
+                        media_index=str(media_index),
+                        section_id=str(section_id),
+                    ).set(total_seconds)
+                except Exception:
+                    logger.debug("Failed to set EPISODE_WATCH_SECONDS metric")
 
                 # Log episode watch time
                 try:
@@ -304,6 +324,7 @@ class WatchTimeCollector(BaseCollector):
         title: str,
         media_type: str,
         library_name: str,
+        section_id: str,
         show_totals: dict[tuple[str, str, str, str], int],
     ) -> None:
         """Process a non-show item (movie, etc.) for watch time."""
@@ -342,6 +363,37 @@ class WatchTimeCollector(BaseCollector):
             media_type=media_type,
             library_name=library_name,
         ).set(total_seconds)
+
+        # If top-level item is an episode, also set the episode-specific metric
+        if media_type == "episode":
+            parent_title = (
+                item.get("parent_title")
+                or item.get("parent")
+                or item.get("parent_full_title")
+                or "unknown"
+            )
+            grandparent_title = (
+                item.get("grandparent_title")
+                or item.get("grandparent_full_title")
+                or item.get("grandparent")
+                or "unknown"
+            )
+            media_index = item.get("media_index", "")
+
+            try:
+                EPISODE_WATCH_SECONDS.labels(
+                    library_name=library_name,
+                    rating_key=rating_key,
+                    title=title[:100],
+                    parent_title=parent_title[:100],
+                    grandparent_title=grandparent_title[:100],
+                    media_index=str(media_index),
+                    section_id=str(section_id),
+                ).set(total_seconds)
+            except Exception:
+                logger.debug(
+                    "Failed to set EPISODE_WATCH_SECONDS for top-level episode"
+                )
 
         # Log each played item with >0 seconds
         try:

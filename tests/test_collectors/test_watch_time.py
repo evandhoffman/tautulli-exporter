@@ -2,7 +2,11 @@ import pytest
 from unittest.mock import AsyncMock
 
 from tautulli_exporter.collectors.watch_time import WatchTimeCollector
-from tautulli_exporter.metrics import ITEM_WATCH_SECONDS, SHOW_WATCH_SECONDS
+from tautulli_exporter.metrics import (
+    ITEM_WATCH_SECONDS,
+    SHOW_WATCH_SECONDS,
+    EPISODE_WATCH_SECONDS,
+)
 
 
 @pytest.mark.asyncio
@@ -76,15 +80,23 @@ async def test_collect_drilldown_and_item_processing(
     mock_client.get_children_metadata.assert_called()
     mock_client.get_item_watch_time_stats.assert_called()
 
-    # Verify metrics: find samples matching our rating keys
+    # Verify ITEM metrics: expect at least entries for M1 and possibly E1
     item_samples = []
     for metric in ITEM_WATCH_SECONDS.collect():
         for s in metric.samples:
             item_samples.append((s.name, s.labels, s.value))
 
-    # Expect at least entries for E1, E2, M1
     keys = {labels.get("rating_key") for _, labels, _ in item_samples}
-    assert "E1" in keys or "E2" in keys or "M1" in keys
+    assert "M1" in keys
+
+    # Verify EPISODE metric has entries for episodes collected (E1 and E2)
+    episode_samples = []
+    for metric in EPISODE_WATCH_SECONDS.collect():
+        for s in metric.samples:
+            episode_samples.append((s.name, s.labels, s.value))
+
+    episode_keys = {labels.get("rating_key") for _, labels, _ in episode_samples}
+    assert "E1" in episode_keys or "E2" in episode_keys
 
     # Verify show aggregate metric exists for the show
     show_samples = []

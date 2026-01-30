@@ -157,6 +157,20 @@ SHOW_WATCH_SECONDS = Gauge(
     ["show_rating_key", "show_title", "media_type", "library_name"],
 )
 
+EPISODE_WATCH_SECONDS = Gauge(
+    "tautulli_episode_watch_seconds",
+    "Total seconds watched per episode",
+    [
+        "library_name",
+        "rating_key",
+        "title",
+        "parent_title",
+        "grandparent_title",
+        "media_index",
+        "section_id",
+    ],
+)
+
 # =============================================================================
 # Scrape Metrics
 # =============================================================================

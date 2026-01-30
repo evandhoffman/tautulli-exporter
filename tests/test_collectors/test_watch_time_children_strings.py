@@ -50,6 +50,17 @@ async def test_children_metadata_returns_strings(
     keys = {labels.get("rating_key") for _, labels, _ in item_samples}
     assert "E3" in keys
 
+    # Verify episode-specific metric exists for E3
+    episode_samples = []
+    from tautulli_exporter.metrics import EPISODE_WATCH_SECONDS
+
+    for metric in EPISODE_WATCH_SECONDS.collect():
+        for s in metric.samples:
+            episode_samples.append((s.name, s.labels, s.value))
+
+    episode_keys = {labels.get("rating_key") for _, labels, _ in episode_samples}
+    assert "E3" in episode_keys
+
     show_samples = []
     for metric in SHOW_WATCH_SECONDS.collect():
         for s in metric.samples:
