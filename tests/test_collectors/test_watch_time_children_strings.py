@@ -19,6 +19,7 @@ async def test_children_metadata_returns_strings(
             "title": "String Show",
             "media_type": "show",
             "play_count": "1",
+            "last_played": "1700000000",
         }
     ]
 

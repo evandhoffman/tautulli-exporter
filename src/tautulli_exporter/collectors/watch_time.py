@@ -64,7 +64,23 @@ class WatchTimeCollector(BaseCollector):
                 )
                 continue
 
-            items = media_table.get("data", []) if isinstance(media_table, dict) else []
+            # media_table may be either:
+            # - a dict with 'data' being a list of items, or
+            # - a dict with 'data' that is itself a dict containing a 'data' list
+            # - or already be a list
+            items = []
+            if isinstance(media_table, list):
+                items = media_table
+            elif isinstance(media_table, dict):
+                data_field = media_table.get("data")
+                if isinstance(data_field, list):
+                    items = data_field
+                elif isinstance(data_field, dict):
+                    items = data_field.get("data", [])
+                else:
+                    items = []
+            else:
+                items = []
 
             for item in items:
                 if processed >= self.max_items:
@@ -76,26 +92,57 @@ class WatchTimeCollector(BaseCollector):
                     )
                     return
 
+                # Prepare common fields early
+                rating_key = str(item.get("rating_key", ""))
+                title = item.get("title") or item.get("full_title") or "unknown"
+                media_type = item.get("media_type", "unknown")
+
                 try:
                     play_count = int(item.get("play_count", 0) or 0)
                 except Exception:
                     play_count = 0
 
-                if play_count <= 0:
-                    try:
-                        logger.debug(
-                            "Skipping item with no plays: rating_key=%s title=%s library=%s",
-                            item.get("rating_key"),
-                            item.get("title") or item.get("full_title"),
+                # For shows: follow the algorithm — only drill into shows where last_played is not null
+                if media_type == "show":
+                    last_played = item.get("last_played")
+                    if last_played in (None, "", 0, "0"):
+                        try:
+                            logger.debug(
+                                "Skipping show with no last_played: rating_key=%s title=%s library=%s",
+                                rating_key,
+                                title,
+                                library_name,
+                            )
+                        except Exception:
+                            pass
+                        # still process the top-level show item metrics, but don't drill
+                        await self._process_item(
+                            item,
+                            rating_key,
+                            title,
+                            media_type,
                             library_name,
+                            section_id,
+                            show_totals,
                         )
-                    except Exception:
-                        pass
-                    continue
+                        processed += 1
+                        continue
+                else:
+                    # Non-show items: skip if no plays
+                    if play_count <= 0:
+                        try:
+                            logger.debug(
+                                "Skipping item with no plays: rating_key=%s title=%s library=%s",
+                                rating_key,
+                                title,
+                                library_name,
+                            )
+                        except Exception:
+                            pass
+                        continue
 
                 rating_key = str(item.get("rating_key", ""))
                 title = item.get("title") or item.get("full_title") or "unknown"
-                media_type = item.get("media_type", "unknown")
 
                 if media_type == "show":
                     # Drill down into show -> seasons -> episodes
@@ -181,6 +228,16 @@ class WatchTimeCollector(BaseCollector):
                 pass
             return
 
+        try:
+            logger.debug(
+                "Drilling show %s (%s): found %d seasons",
+                show_title,
+                show_rating_key,
+                len(seasons),
+            )
+        except Exception:
+            pass
+
         show_total_seconds = 0
 
         for season in seasons:
@@ -221,7 +278,38 @@ class WatchTimeCollector(BaseCollector):
                     type(episodes_resp),
                     season_rating_key,
                 )
-                continue
+                episodes = []
+
+            # Fallback: if no episodes found via children metadata, try library media info
+            if not episodes:
+                try:
+                    fallback = await self.client.get_library_media_info(
+                        section_id=section_id, rating_key=season_rating_key
+                    )
+                    if isinstance(fallback, dict) and "data" in fallback:
+                        episodes = fallback.get("data", [])
+                except Exception:
+                    pass
+
+            try:
+                logger.debug(
+                    "Season %s (%s): found %d episodes",
+                    season_title,
+                    season_rating_key,
+                    len(episodes),
+                )
+            except Exception:
+                pass
+
+            try:
+                logger.debug(
+                    "Season %s (%s): found %d episodes",
+                    season_title,
+                    season_rating_key,
+                    len(episodes),
+                )
+            except Exception:
+                pass
 
             for episode in episodes:
                 # episode may be a dict or a rating_key string
@@ -259,6 +347,16 @@ class WatchTimeCollector(BaseCollector):
                     )
                     continue
 
+                try:
+                    logger.debug(
+                        "Got watch time stats for episode %s (%s): %s",
+                        episode_title,
+                        episode_rating_key,
+                        stats,
+                    )
+                except Exception:
+                    pass
+
                 # Extract total_seconds
                 total_seconds = 0
                 if isinstance(stats, list) and stats:
@@ -293,6 +391,17 @@ class WatchTimeCollector(BaseCollector):
                         media_index=str(media_index),
                         section_id=str(section_id),
                     ).set(total_seconds)
+                    try:
+                        logger.debug(
+                            "Set EPISODE_WATCH_SECONDS: %s (%s) parent=%s grandparent=%s seconds=%d",
+                            episode_title,
+                            episode_rating_key,
+                            season_title,
+                            show_title,
+                            total_seconds,
+                        )
+                    except Exception:
+                        pass
                 except Exception:
                     logger.debug("Failed to set EPISODE_WATCH_SECONDS metric")
 
@@ -316,6 +425,16 @@ class WatchTimeCollector(BaseCollector):
         # Update show totals
         show_id = (show_rating_key, show_title[:100], "show", library_name)
         show_totals[show_id] = show_totals.get(show_id, 0) + show_total_seconds
+
+        try:
+            logger.debug(
+                "Show %s (%s) total seconds from episodes: %d",
+                show_title,
+                show_rating_key,
+                show_total_seconds,
+            )
+        except Exception:
+            pass
 
     async def _process_item(
         self,

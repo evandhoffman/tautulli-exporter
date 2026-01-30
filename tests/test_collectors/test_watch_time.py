@@ -23,6 +23,7 @@ async def test_collect_drilldown_and_item_processing(
             "title": "Test Show",
             "media_type": "show",
             "play_count": "2",
+            "last_played": "1610000000",
         },
         {
             "rating_key": "M1",
