@@ -214,25 +214,35 @@ class WatchTimeCollector(BaseCollector):
                 show_media_type,
                 lib_name,
             ), seconds in show_totals.items():
-                SHOW_WATCH_SECONDS.labels(
-                    show_rating_key=show_key or "",
-                    show_title=show_title,
-                    media_type=show_media_type,
-                    library_name=lib_name,
-                ).set(seconds)
-                # Log aggregated show totals when there is watched time
+                # Only set show-level watch seconds when > 0; otherwise remove any existing metric for the labelset
                 try:
                     if seconds > 0:
-                        logger.info(
-                            "WatchTimeCollector: show aggregate - show_rating_key=%s show_title=%s media_type=%s library=%s seconds=%d",
-                            show_key,
-                            show_title,
-                            show_media_type,
-                            lib_name,
-                            seconds,
-                        )
+                        SHOW_WATCH_SECONDS.labels(
+                            show_rating_key=show_key or "",
+                            show_title=show_title,
+                            media_type=show_media_type,
+                            library_name=lib_name,
+                        ).set(seconds)
+                        try:
+                            logger.info(
+                                "WatchTimeCollector: show aggregate - show_rating_key=%s show_title=%s media_type=%s library=%s seconds=%d",
+                                show_key,
+                                show_title,
+                                show_media_type,
+                                lib_name,
+                                seconds,
+                            )
+                        except Exception:
+                            logger.debug("Failed to log show aggregate info")
+                    else:
+                        try:
+                            SHOW_WATCH_SECONDS.remove(
+                                show_key or "", show_title, show_media_type, lib_name
+                            )
+                        except Exception:
+                            pass
                 except Exception:
-                    logger.debug("Failed to log show aggregate info")
+                    logger.debug("Failed to publish show-level watch time aggregates")
         except Exception:
             logger.debug("Failed to publish show-level watch time aggregates")
 
@@ -487,12 +497,28 @@ class WatchTimeCollector(BaseCollector):
                         total_seconds = 0
 
                 # Set per-episode metric (item-level)
-                ITEM_WATCH_SECONDS.labels(
-                    rating_key=episode_rating_key,
-                    title=episode_title[:100],
-                    media_type="episode",
-                    library_name=library_name,
-                ).set(total_seconds)
+                # Only export item-level watch seconds if there's actual watched time
+                try:
+                    if total_seconds > 0:
+                        ITEM_WATCH_SECONDS.labels(
+                            rating_key=episode_rating_key,
+                            title=episode_title[:100],
+                            media_type="episode",
+                            library_name=library_name,
+                        ).set(total_seconds)
+                    else:
+                        # Remove any previously-set zero-valued metric for this labelset
+                        try:
+                            ITEM_WATCH_SECONDS.remove(
+                                episode_rating_key,
+                                episode_title[:100],
+                                "episode",
+                                library_name,
+                            )
+                        except Exception:
+                            pass
+                except Exception:
+                    logger.debug("Failed to set/remove ITEM_WATCH_SECONDS for episode")
 
                 # Set explicit episode metric with richer labels
                 try:
@@ -590,12 +616,24 @@ class WatchTimeCollector(BaseCollector):
             except Exception:
                 total_seconds = 0
 
-        ITEM_WATCH_SECONDS.labels(
-            rating_key=rating_key,
-            title=title[:100],
-            media_type=media_type,
-            library_name=library_name,
-        ).set(total_seconds)
+        # Only export item-level watch seconds if > 0, otherwise remove any existing metric
+        try:
+            if total_seconds > 0:
+                ITEM_WATCH_SECONDS.labels(
+                    rating_key=rating_key,
+                    title=title[:100],
+                    media_type=media_type,
+                    library_name=library_name,
+                ).set(total_seconds)
+            else:
+                try:
+                    ITEM_WATCH_SECONDS.remove(
+                        rating_key, title[:100], media_type, library_name
+                    )
+                except Exception:
+                    pass
+        except Exception:
+            logger.debug("Failed to set/remove ITEM_WATCH_SECONDS for item")
 
         # If top-level item is an episode, also set the episode-specific metric
         if media_type == "episode":
