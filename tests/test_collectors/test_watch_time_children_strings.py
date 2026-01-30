@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import AsyncMock
 
 from tautulli_exporter.collectors.watch_time import WatchTimeCollector
-from tautulli_exporter.metrics import ITEM_WATCH_SECONDS, SHOW_WATCH_SECONDS
+from tautulli_exporter.metrics import SHOW_WATCH_SECONDS
 
 
 @pytest.mark.asyncio
@@ -65,15 +65,6 @@ async def test_children_metadata_returns_strings(
     collector = WatchTimeCollector(mock_client, max_items=50)
 
     await collector.collect()
-
-    # Ensure metrics were created
-    item_samples = []
-    for metric in ITEM_WATCH_SECONDS.collect():
-        for s in metric.samples:
-            item_samples.append((s.name, s.labels, s.value))
-
-    keys = {labels.get("rating_key") for _, labels, _ in item_samples}
-    assert "E3" in keys
 
     # Verify episode-specific metric exists for E3
     episode_samples = []

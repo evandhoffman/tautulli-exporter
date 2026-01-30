@@ -4,7 +4,6 @@ import logging
 from typing import Any
 
 from ..metrics import (
-    ITEM_WATCH_SECONDS,
     SHOW_WATCH_SECONDS,
     EPISODE_WATCH_SECONDS,
 )
@@ -497,28 +496,6 @@ class WatchTimeCollector(BaseCollector):
                         total_seconds = 0
 
                 # Set per-episode metric (item-level)
-                # Only export item-level watch seconds if there's actual watched time
-                try:
-                    if total_seconds > 0:
-                        ITEM_WATCH_SECONDS.labels(
-                            rating_key=episode_rating_key,
-                            title=episode_title[:100],
-                            media_type="episode",
-                            library_name=library_name,
-                        ).set(total_seconds)
-                    else:
-                        # Remove any previously-set zero-valued metric for this labelset
-                        try:
-                            ITEM_WATCH_SECONDS.remove(
-                                episode_rating_key,
-                                episode_title[:100],
-                                "episode",
-                                library_name,
-                            )
-                        except Exception:
-                            pass
-                except Exception:
-                    logger.debug("Failed to set/remove ITEM_WATCH_SECONDS for episode")
 
                 # Set explicit episode metric with richer labels (only if > 0)
                 try:
@@ -630,25 +607,6 @@ class WatchTimeCollector(BaseCollector):
                 total_seconds = int(match.get("total_time", 0) or 0)
             except Exception:
                 total_seconds = 0
-
-        # Only export item-level watch seconds if > 0, otherwise remove any existing metric
-        try:
-            if total_seconds > 0:
-                ITEM_WATCH_SECONDS.labels(
-                    rating_key=rating_key,
-                    title=title[:100],
-                    media_type=media_type,
-                    library_name=library_name,
-                ).set(total_seconds)
-            else:
-                try:
-                    ITEM_WATCH_SECONDS.remove(
-                        rating_key, title[:100], media_type, library_name
-                    )
-                except Exception:
-                    pass
-        except Exception:
-            logger.debug("Failed to set/remove ITEM_WATCH_SECONDS for item")
 
         # If top-level item is an episode, also set the episode-specific metric
         if media_type == "episode":

@@ -98,7 +98,7 @@ tautulli_pms_info{name,version}       # Plex server info
 # Counter metrics (cumulative)
 tautulli_plays_total{library,type}    # Total plays
 tautulli_watch_seconds_total{library} # Total watch time
-tautulli_item_watch_seconds{rating_key,title,media_type,library_name} # Seconds watched per item (episode/movie)
+
 ```
 
 ### Stream Detail Metrics (per-session labels)

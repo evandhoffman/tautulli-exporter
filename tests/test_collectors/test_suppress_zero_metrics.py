@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import AsyncMock
 
 from tautulli_exporter.collectors.watch_time import WatchTimeCollector
-from tautulli_exporter.metrics import ITEM_WATCH_SECONDS, SHOW_WATCH_SECONDS
+from tautulli_exporter.metrics import SHOW_WATCH_SECONDS
 
 
 @pytest.mark.asyncio
@@ -53,10 +53,6 @@ async def test_zero_item_and_show_not_exported(mock_client, sample_libraries_res
 
     # Ensure no lingering metrics
     try:
-        ITEM_WATCH_SECONDS.remove("M0", "Zero Movie", "movie", "Movies")
-    except Exception:
-        pass
-    try:
         SHOW_WATCH_SECONDS.remove("S0", "Zero Show", "show", "TV Shows")
     except Exception:
         pass
@@ -65,50 +61,9 @@ async def test_zero_item_and_show_not_exported(mock_client, sample_libraries_res
     await collector.collect()
 
     # Collect metrics
-    item_keys = {
-        labels.get("rating_key")
-        for _, labels, _ in ITEM_WATCH_SECONDS.collect()[0].samples
-    }
     show_keys = {
         labels.get("show_rating_key")
         for _, labels, _ in SHOW_WATCH_SECONDS.collect()[0].samples
     }
 
-    assert "M0" not in item_keys
     assert "S0" not in show_keys
-
-
-@pytest.mark.asyncio
-async def test_remove_existing_item_metric_when_zero(
-    mock_client, sample_libraries_response
-):
-    # Start by setting a metric value manually
-    ITEM_WATCH_SECONDS.labels(
-        rating_key="M1", title="Now 100", media_type="movie", library_name="Movies"
-    ).set(100)
-
-    # Now collector returns zero for M1
-    media_items = [
-        {
-            "rating_key": "M1",
-            "title": "Now 100",
-            "media_type": "movie",
-            "play_count": "1",
-        }
-    ]
-    mock_client.get_libraries = AsyncMock(return_value=sample_libraries_response)
-    mock_client.get_library_media_info = AsyncMock(return_value={"data": media_items})
-
-    async def fake_stats(rating_key, media_type=None, query_days="0"):
-        return [{"query_days": "0", "total_time": 0}]
-
-    mock_client.get_item_watch_time_stats = AsyncMock(side_effect=fake_stats)
-
-    collector = WatchTimeCollector(mock_client, max_items=50)
-    await collector.collect()
-
-    keys = {
-        labels.get("rating_key")
-        for _, labels, _ in ITEM_WATCH_SECONDS.collect()[0].samples
-    }
-    assert "M1" not in keys

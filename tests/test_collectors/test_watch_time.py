@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock
 
 from tautulli_exporter.collectors.watch_time import WatchTimeCollector
 from tautulli_exporter.metrics import (
-    ITEM_WATCH_SECONDS,
     SHOW_WATCH_SECONDS,
     EPISODE_WATCH_SECONDS,
 )
@@ -82,15 +81,6 @@ async def test_collect_drilldown_and_item_processing(
     mock_client.get_library_media_info.assert_called()
     mock_client.get_children_metadata.assert_called()
     mock_client.get_item_watch_time_stats.assert_called()
-
-    # Verify ITEM metrics: expect at least entries for M1 and possibly E1
-    item_samples = []
-    for metric in ITEM_WATCH_SECONDS.collect():
-        for s in metric.samples:
-            item_samples.append((s.name, s.labels, s.value))
-
-    keys = {labels.get("rating_key") for _, labels, _ in item_samples}
-    assert "M1" in keys
 
     # Verify EPISODE metric has entries for episodes collected (E1 and E2)
     episode_samples = []

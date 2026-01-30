@@ -29,7 +29,7 @@
 
     {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 3, "w": 12, "x": 12, "y": 17}, "id": 11, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "tautulli", "legendFormat": "tautulli info", "refId": "A"}, {"expr": "tautulli_pms", "legendFormat": "pms info", "refId": "B"}], "title": "Tautulli / PMS Info (labels)", "type": "table"}
   },
-    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 6, "w": 12, "x": 0, "y": 20}, "id": 12, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "topk(20, tautulli_item_watch_seconds)", "legendFormat": "{{title}} ({{library_name}})", "refId": "A"}], "title": "Top Watched Items (seconds)", "type": "table"},
+
 
     {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 6, "w": 12, "x": 12, "y": 20}, "id": 13, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "topk(20, tautulli_show_watch_seconds)", "legendFormat": "{{show_title}} ({{library_name}})", "refId": "A"}], "title": "Top Watched Shows (seconds)", "type": "table"}
   ],
