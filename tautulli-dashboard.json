@@ -17,21 +17,39 @@
 
     {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 6, "w": 12, "x": 0, "y": 5}, "id": 5, "options": {"legend": {"showLegend": true}}, "pluginVersion": "12.3.1", "targets": [{"expr": "tautulli_bandwidth_kbps{location=~\"total|lan|wan\"}", "legendFormat": "{{location}}", "refId": "A"}], "title": "Bandwidth Over Time (kbps)", "type": "timeseries"},
 
-    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 6, "w": 12, "x": 12, "y": 5}, "id": 6, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "tautulli_stream_info", "legendFormat": "{{user}} - {{title}}", "refId": "A"}], "title": "Active Sessions (labels: user,title,state,transcode_decision,platform,library)", "type": "table"},
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 4, "w": 6, "x": 12, "y": 5}, "id": 6, "options": {"reduceOptions": {"calcs": ["lastNotNull"], "values": false}}, "pluginVersion": "12.3.1", "targets": [{"expr": "sum(tautulli_stream_info)", "legendFormat": "Active Sessions", "refId": "A"}], "title": "Active Sessions (count)", "type": "stat"},
 
-    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 5, "w": 12, "x": 0, "y": 11}, "id": 7, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "topk(10, tautulli_library_plays_total)", "legendFormat": "{{library_name}}", "refId": "A"}], "title": "Top Libraries (plays)", "type": "table"},
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 4, "w": 12, "x": 0, "y": 11}, "id": 7, "options": {"reduceOptions": {"calcs": ["lastNotNull"], "values": false}}, "pluginVersion": "12.3.1", "targets": [{"expr": "topk(5, tautulli_library_plays_total)", "legendFormat": "{{library_name}}", "refId": "A"}], "title": "Top Libraries (plays)", "type": "stat"},
 
-    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 5, "w": 12, "x": 12, "y": 11}, "id": 8, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "topk(10, tautulli_user_plays_total)", "legendFormat": "{{user}}", "refId": "A"}], "title": "Top Users (plays)", "type": "table"},
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 4, "w": 12, "x": 12, "y": 11}, "id": 8, "options": {"reduceOptions": {"calcs": ["lastNotNull"], "values": false}}, "pluginVersion": "12.3.1", "targets": [{"expr": "topk(10, tautulli_user_plays_total)", "legendFormat": "{{user}}", "refId": "A"}], "title": "Top Users (plays)", "type": "stat"},
 
     {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 3, "w": 6, "x": 0, "y": 17}, "id": 9, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "tautulli_up", "legendFormat": "Exporter Up", "refId": "A"}], "title": "Exporter Up", "type": "stat"},
 
     {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 3, "w": 6, "x": 6, "y": 17}, "id": 10, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "tautulli_server_connected", "legendFormat": "Plex Connected", "refId": "A"}], "title": "Plex Connected", "type": "stat"},
 
-    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 3, "w": 12, "x": 12, "y": 17}, "id": 11, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "tautulli", "legendFormat": "tautulli info", "refId": "A"}, {"expr": "tautulli_pms", "legendFormat": "pms info", "refId": "B"}], "title": "Tautulli / PMS Info (labels)", "type": "table"}
-  },
-    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 6, "w": 12, "x": 0, "y": 20}, "id": 12, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "topk(20, tautulli_item_watch_seconds)", "legendFormat": "{{title}} ({{library_name}})", "refId": "A"}], "title": "Top Watched Items (seconds)", "type": "table"},
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 3, "w": 6, "x": 12, "y": 17}, "id": 11, "options": {"reduceOptions": {"calcs": ["lastNotNull"], "values": false}}, "pluginVersion": "12.3.1", "targets": [{"expr": "tautulli_info", "legendFormat": "{{version}} ({{platform}})", "refId": "A"}], "title": "Tautulli Version", "type": "stat"},
 
-    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 6, "w": 12, "x": 12, "y": 20}, "id": 13, "options": {}, "pluginVersion": "12.3.1", "targets": [{"expr": "topk(20, tautulli_show_watch_seconds)", "legendFormat": "{{show_title}} ({{library_name}})", "refId": "A"}], "title": "Top Watched Shows (seconds)", "type": "table"}
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 3, "w": 6, "x": 18, "y": 17}, "id": 12, "options": {"reduceOptions": {"calcs": ["lastNotNull"], "values": false}}, "pluginVersion": "12.3.1", "targets": [{"expr": "tautulli_pms_info", "legendFormat": "{{name}} / {{version}} ({{platform}})", "refId": "A"}], "title": "PMS Info", "type": "stat"},
+
+
+
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 6, "w": 12, "x": 0, "y": 20}, "id": 21, "options": {"reduceOptions": {"calcs": ["lastNotNull"], "values": false}}, "fieldConfig": {"defaults": {"unit": "dtdurations"}, "overrides": []}, "pluginVersion": "12.3.1", "targets": [{"expr": "topk(10, tautulli_episode_watch_seconds)", "legendFormat": "{{title}} ({{grandparent_title}})", "refId": "A"}], "title": "Top 10 Episodes (gauges)", "type": "stat"},
+
+    
+
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 4, "w": 12, "x": 0, "y": 26}, "id": 22, "options": {"reduceOptions": {"calcs": ["lastNotNull"], "values": false}}, "fieldConfig": {"defaults": {"unit": "dtdurations"}, "overrides": []}, "pluginVersion": "12.3.1", "targets": [{"expr": "topk(10, tautulli_user_watch_duration_seconds)", "legendFormat": "{{user}}", "refId": "A"}], "title": "Top Users by Watch Duration (seconds)", "type": "stat"},
+
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 4, "w": 12, "x": 12, "y": 26}, "id": 23, "options": {"reduceOptions": {"calcs": ["lastNotNull"], "values": false}}, "fieldConfig": {"defaults": {"unit": "dtdurations"}, "overrides": []}, "pluginVersion": "12.3.1", "targets": [{"expr": "topk(10, tautulli_library_watch_duration_seconds)", "legendFormat": "{{library_name}}", "refId": "A"}], "title": "Top Libraries by Watch Duration (seconds)", "type": "stat"},
+
+    {"collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 30}, "id": 33, "panels": [], "title": "🕵️ Content Insights", "type": "row"},
+
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 6, "w": 12, "x": 0, "y": 31}, "id": 40, "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}}, "fieldConfig": {"defaults": {"unit": "dtdurations"}, "overrides": []}, "pluginVersion": "12.3.1", "targets": [{"expr": "topk(10, tautulli_show_watch_seconds)", "legendFormat": "{{show_title}} - {{library_name}}", "refId": "A"}], "title": "Top 10 Shows (gauges)", "type": "stat"},
+
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 6, "w": 12, "x": 12, "y": 31}, "id": 41, "options": {"reduceOptions": {"calcs": ["lastNotNull"], "values": false}}, "fieldConfig": {"defaults": {"unit": "dtdurations"}, "overrides": []}, "pluginVersion": "12.3.1", "targets": [{"expr": "topk(10, tautulli_show_watch_seconds)", "legendFormat": "{{show_title}} ({{library_name}})", "refId": "A"}], "title": "Top 10 Shows (gauges)", "type": "stat"},
+
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 4, "w": 12, "x": 0, "y": 37}, "id": 42, "options": {"reduceOptions": {"calcs": ["lastNotNull"], "values": false}}, "fieldConfig": {"defaults": {"unit": "dtdurations"}, "overrides": []}, "pluginVersion": "12.3.1", "targets": [{"expr": "topk(10, tautulli_user_watch_duration_seconds)", "legendFormat": "{{user}}", "refId": "A"}], "title": "Top Users by Watch Duration (seconds)", "type": "stat"},
+
+    {"datasource": {"type": "prometheus", "uid": "${datasource}"}, "gridPos": {"h": 4, "w": 12, "x": 12, "y": 37}, "id": 43, "options": {"reduceOptions": {"calcs": ["lastNotNull"], "values": false}}, "fieldConfig": {"defaults": {"unit": "dtdurations"}, "overrides": []}, "pluginVersion": "12.3.1", "targets": [{"expr": "topk(10, tautulli_library_watch_duration_seconds)", "legendFormat": "{{library_name}}", "refId": "A"}], "title": "Top Libraries by Watch Duration (seconds)", "type": "stat"}
   ],
   "refresh": "30s",
   "schemaVersion": 42,

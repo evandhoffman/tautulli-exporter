@@ -380,3 +380,14 @@ class TautulliClient:
         if media_type is not None:
             params["media_type"] = media_type
         return await self._request("get_item_watch_time_stats", **params)
+
+    async def get_children_metadata(self, rating_key: str) -> list[dict[str, Any]]:
+        """Get children metadata for a media item (e.g., seasons for a show, episodes for a season).
+
+        Args:
+            rating_key: Rating key of the parent item.
+
+        Returns:
+            List of child item dicts.
+        """
+        return await self._request("get_children_metadata", rating_key=rating_key)

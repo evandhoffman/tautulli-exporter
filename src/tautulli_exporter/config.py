@@ -64,6 +64,12 @@ class Settings(BaseSettings):
         ge=1,
     )
 
+    # Whether to drill down into all shows regardless of show-level last_played
+    watch_time_drill_all_shows: bool = Field(
+        default=False,
+        description="If true, drill down into all shows to collect episode metrics even when show.last_played is null",
+    )
+
     # Collection intervals (in seconds)
     activity_collection_interval: int = Field(
         default=15,

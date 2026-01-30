@@ -188,8 +188,55 @@ Returns: Array with:
 The exporter can collect detailed watch-time metrics per media item (episodes/movies) and aggregated per-show totals. These are implemented by querying media info for libraries and then requesting per-item watch-time stats. Be aware this can be API-heavy on large libraries; control via configuration (`COLLECT_WATCH_TIME_STATS`, `WATCH_TIME_MAX_ITEMS`).
 
 **Metrics**:
-- `tautulli_item_watch_seconds{rating_key,title,media_type,library_name}`: Total seconds watched for individual media items (episodes or movies).
+
 - `tautulli_show_watch_seconds{show_rating_key,show_title,media_type,library_name}`: Aggregated total seconds watched per show (episodes summed) or per-movie.
+- `tautulli_episode_watch_seconds{rating_key,title,parent_title,grandparent_title,media_index,section_id,library_name}`: Total seconds watched per episode. **Exported only if an episode's `last_viewed_at` is set and the measured seconds are > 0.**
+
+Note: `tautulli_item_watch_seconds` (per-item metric) has been removed — prefer aggregated show metrics or explicit episode metrics to reduce cardinality.
+
+### Episode Drilldown Algorithm
+
+To obtain watched time for each episode of a show (TV series), the exporter should drill down the library metadata using the following approach:
+
+1. Start from the show's `rating_key` (the show-level rating key returned by `get_library_media_info` or other endpoints).
+2. For any item returned by `get_library_media_info` where `last_played` > 0 and the item indicates a show (e.g. `media_type == "show"` or `section_type == "show"`), recursively drill down.
+3. Call `get_children_metadata` with the show's `rating_key` to retrieve its child items (usually seasons). From each season entry capture the season's `rating_key` and any season metadata such as `parent_title`/`title`.
+4. For each season, call `get_children_metadata` again using the season's `rating_key` to retrieve episode-level items. Some libraries may have an extra nesting level—keep drilling until you reach items where `media_type` == `episode`.
+4. Once you have an item whose `media_type` is `episode`, take that episode's `rating_key` and call `get_item_watch_time_stats` with `query_days=0` to fetch all-time watch stats for that episode. The response looks like:
+
+```
+{
+  "response": {
+    "result": "success",
+    "message": null,
+    "data": [
+      {
+        "query_days": 0,
+        "total_time": 2533,
+        "total_plays": 1
+      }
+    ]
+  }
+}
+```
+
+5. Export the returned `total_time` as a per-episode metric.
+
+Metric to export:
+
+- `tautulli_episode_watch_seconds`: Gauge containing watched seconds per episode with these labels (populate from the `get_children_metadata` responses and the episode item):
+  - `library_name`
+  - `rating_key` (episode rating key)
+  - `title` (episode title)
+  - `parent_title` (season title or parent container)
+  - `grandparent_title` (series/show title)
+  - `media_index` (episode index/media_index)
+  - `section_id` (library section id)
+
+Notes:
+- The drilldown uses `get_children_metadata` repeatedly until items with `media_type == "episode"` are found.
+- Use `query_days=0` for `get_item_watch_time_stats` to get all-time totals.
+- This process can be API-heavy on large libraries; respect configuration limits such as `WATCH_TIME_MAX_ITEMS` and consider caching results.
 
 ---
 
