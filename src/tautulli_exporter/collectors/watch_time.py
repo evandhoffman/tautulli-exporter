@@ -149,37 +149,96 @@ class WatchTimeCollector(BaseCollector):
     ) -> None:
         """Drill down into a show to get episode watch times."""
         try:
-            # Get seasons for the show
-            seasons = await self.client.get_children_metadata(show_rating_key)
+            # Get seasons for the show. Some Tautulli versions return a list of dicts,
+            # others may return a list of rating_key strings.
+            seasons_resp = await self.client.get_children_metadata(show_rating_key)
         except Exception as e:
             logger.warning(
                 f"Failed to get seasons for show {show_title} ({show_rating_key}): {e}"
             )
             return
 
+        # Normalize seasons into an iterable of season dict-like objects or rating keys
+        if isinstance(seasons_resp, dict) and "data" in seasons_resp:
+            seasons = seasons_resp.get("data", [])
+        elif isinstance(seasons_resp, list):
+            seasons = seasons_resp
+        else:
+            # Unexpected shape
+            try:
+                logger.debug(
+                    "Unexpected seasons response type %s for show %s",
+                    type(seasons_resp),
+                    show_rating_key,
+                )
+            except Exception:
+                pass
+            return
+
         show_total_seconds = 0
 
         for season in seasons:
-            season_rating_key = str(season.get("rating_key", ""))
+            # season may be a dict or a rating_key string
+            if isinstance(season, dict):
+                season_rating_key = str(
+                    season.get("rating_key", "") or season.get("ratingKey", "")
+                )
+                season_title = season.get("title", "unknown")
+            elif isinstance(season, (str, int)):
+                season_rating_key = str(season)
+                season_title = "unknown"
+            else:
+                logger.debug("Skipping unexpected season type: %s", type(season))
+                continue
+
             if not season_rating_key:
                 continue
 
             try:
                 # Get episodes for the season
-                episodes = await self.client.get_children_metadata(season_rating_key)
+                episodes_resp = await self.client.get_children_metadata(
+                    season_rating_key
+                )
             except Exception as e:
                 logger.warning(
-                    f"Failed to get episodes for season {season.get('title', 'unknown')} ({season_rating_key}): {e}"
+                    f"Failed to get episodes for season {season_title} ({season_rating_key}): {e}"
+                )
+                continue
+
+            if isinstance(episodes_resp, dict) and "data" in episodes_resp:
+                episodes = episodes_resp.get("data", [])
+            elif isinstance(episodes_resp, list):
+                episodes = episodes_resp
+            else:
+                logger.debug(
+                    "Unexpected episodes response type %s for season %s",
+                    type(episodes_resp),
+                    season_rating_key,
                 )
                 continue
 
             for episode in episodes:
-                if episode.get("media_type") != "episode":
+                # episode may be a dict or a rating_key string
+                if isinstance(episode, dict):
+                    media_type_val = episode.get("media_type") or episode.get("type")
+                    if media_type_val and str(media_type_val) != "episode":
+                        continue
+
+                    episode_rating_key = str(
+                        episode.get("rating_key", "") or episode.get("ratingKey", "")
+                    )
+                    episode_title = episode.get("title", "unknown")
+                    media_index = episode.get("media_index", "")
+                elif isinstance(episode, (str, int)):
+                    episode_rating_key = str(episode)
+                    episode_title = "unknown"
+                    media_index = ""
+                else:
+                    logger.debug("Skipping unexpected episode type: %s", type(episode))
                     continue
 
-                episode_rating_key = str(episode.get("rating_key", ""))
-                episode_title = episode.get("title", "unknown")
-                media_index = episode.get("media_index", "")
+                if not episode_rating_key:
+                    continue
 
                 # Get watch time stats for the episode
                 try:
@@ -224,7 +283,7 @@ class WatchTimeCollector(BaseCollector):
                             "WatchTimeCollector: episode played - rating_key=%s title=%s parent_title=%s grandparent_title=%s media_index=%s library=%s seconds=%d",
                             episode_rating_key,
                             episode_title,
-                            season.get("title", "unknown"),
+                            season_title,
                             show_title,
                             media_index,
                             library_name,
@@ -234,7 +293,6 @@ class WatchTimeCollector(BaseCollector):
                     logger.debug("Failed to log episode watch info")
 
                 show_total_seconds += total_seconds
-
         # Update show totals
         show_id = (show_rating_key, show_title[:100], "show", library_name)
         show_totals[show_id] = show_totals.get(show_id, 0) + show_total_seconds
