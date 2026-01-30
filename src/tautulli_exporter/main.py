@@ -61,7 +61,11 @@ class TautulliExporter:
             collectors.append(UserCollector(self.client))
 
         if self.settings.collect_watch_time_stats:
-            collectors.append(WatchTimeCollector(self.client, max_items=self.settings.watch_time_max_items))
+            collectors.append(
+                WatchTimeCollector(
+                    self.client, max_items=self.settings.watch_time_max_items
+                )
+            )
 
         return collectors
 
@@ -96,9 +100,7 @@ class TautulliExporter:
             )
             self._background_tasks.append(stats_task)
 
-    async def _collection_loop(
-        self, collectors: list, interval: int
-    ) -> None:
+    async def _collection_loop(self, collectors: list, interval: int) -> None:
         """Run collection loop for a set of collectors.
 
         Args:

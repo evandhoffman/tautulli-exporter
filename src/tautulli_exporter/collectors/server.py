@@ -46,12 +46,14 @@ class ServerCollector(BaseCollector):
         """Collect Tautulli server information."""
         try:
             info = await self.client.get_tautulli_info()
-            TAUTULLI_INFO.info({
-                "version": info.get("tautulli_version", "unknown"),
-                "branch": info.get("tautulli_branch", "unknown"),
-                "platform": info.get("tautulli_platform", "unknown"),
-                "python_version": info.get("tautulli_python_version", "unknown"),
-            })
+            TAUTULLI_INFO.info(
+                {
+                    "version": info.get("tautulli_version", "unknown"),
+                    "branch": info.get("tautulli_branch", "unknown"),
+                    "platform": info.get("tautulli_platform", "unknown"),
+                    "python_version": info.get("tautulli_python_version", "unknown"),
+                }
+            )
             self._tautulli_info_set = True
             logger.info(f"Tautulli version: {info.get('tautulli_version', 'unknown')}")
         except Exception as e:
@@ -61,12 +63,14 @@ class ServerCollector(BaseCollector):
         """Collect Plex Media Server information."""
         try:
             info = await self.client.get_server_info()
-            PMS_INFO.info({
-                "name": info.get("pms_name", "unknown"),
-                "version": info.get("pms_version", "unknown"),
-                "platform": info.get("pms_platform", "unknown"),
-                "ip": info.get("pms_ip", "unknown"),
-            })
+            PMS_INFO.info(
+                {
+                    "name": info.get("pms_name", "unknown"),
+                    "version": info.get("pms_version", "unknown"),
+                    "platform": info.get("pms_platform", "unknown"),
+                    "ip": info.get("pms_ip", "unknown"),
+                }
+            )
             self._pms_info_set = True
             logger.info(f"Plex server: {info.get('pms_name', 'unknown')}")
         except Exception as e:

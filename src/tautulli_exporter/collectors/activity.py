@@ -46,15 +46,9 @@ class ActivityCollector(BaseCollector):
         )
 
         # Bandwidth metrics
-        BANDWIDTH.labels(location="total").set(
-            float(data.get("total_bandwidth", 0))
-        )
-        BANDWIDTH.labels(location="wan").set(
-            float(data.get("wan_bandwidth", 0))
-        )
-        BANDWIDTH.labels(location="lan").set(
-            float(data.get("lan_bandwidth", 0))
-        )
+        BANDWIDTH.labels(location="total").set(float(data.get("total_bandwidth", 0)))
+        BANDWIDTH.labels(location="wan").set(float(data.get("wan_bandwidth", 0)))
+        BANDWIDTH.labels(location="lan").set(float(data.get("lan_bandwidth", 0)))
 
         # Process individual sessions
         await self._process_sessions(data.get("sessions", []))

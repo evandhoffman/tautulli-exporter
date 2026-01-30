@@ -29,7 +29,9 @@ class TestActivityCollector:
 
         assert collector._normalize_transcode_decision("direct play") == "direct_play"
         assert collector._normalize_transcode_decision("Direct Play") == "direct_play"
-        assert collector._normalize_transcode_decision("direct stream") == "direct_stream"
+        assert (
+            collector._normalize_transcode_decision("direct stream") == "direct_stream"
+        )
         assert collector._normalize_transcode_decision("copy") == "direct_stream"
         assert collector._normalize_transcode_decision("transcode") == "transcode"
         assert collector._normalize_transcode_decision("Transcode") == "transcode"
