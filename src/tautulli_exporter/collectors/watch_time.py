@@ -27,6 +27,14 @@ class WatchTimeCollector(BaseCollector):
     def __init__(self, client: TautulliClient, max_items: int = 500):
         super().__init__(client)
         self.max_items = max_items
+        try:
+            logger.info(
+                "WatchTimeCollector initialized: max_items=%d, client=%s",
+                self.max_items,
+                getattr(client, "base_url", repr(client)),
+            )
+        except Exception:
+            logger.debug("WatchTimeCollector initialization log failed")
 
     async def collect(self) -> None:
         # Get libraries

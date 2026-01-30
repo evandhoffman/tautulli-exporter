@@ -138,7 +138,15 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
 
     # Configure logging level
-    logging.getLogger().setLevel(settings.log_level)
+    level = getattr(logging, settings.log_level, logging.INFO)
+    logging.getLogger().setLevel(level)
+    # Ensure existing handlers respect the configured level (uvicorn may reconfigure handlers)
+    for h in logging.getLogger().handlers:
+        try:
+            h.setLevel(level)
+        except Exception:
+            pass
+    logger.debug(f"Logging level set to {settings.log_level} ({level})")
 
     logger.info(f"Starting Tautulli Exporter v0.1.0")
     logger.info(f"Connecting to Tautulli at {settings.tautulli_base_url}")
