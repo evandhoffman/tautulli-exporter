@@ -325,6 +325,44 @@ class TautulliClient:
 
         return await self._request("get_library_media_info", **params)
 
+    async def get_library_media_info_all(
+        self,
+        section_id: str | None = None,
+        section_type: str | None = None,
+        search: str | None = None,
+        page_size: int = 500,
+    ) -> list[dict[str, Any]]:
+        """Fetch all media info rows for a library, following pagination.
+
+        This helper will iterate over `start` offsets until no more rows are
+        returned. It returns a flat list of media item dicts.
+        """
+        start = 0
+        all_items: list[dict[str, Any]] = []
+
+        while True:
+            resp = await self.get_library_media_info(
+                section_id=section_id,
+                section_type=section_type,
+                search=search,
+                start=start,
+                length=page_size,
+            )
+
+            # Response is expected to be a dict with 'data' list
+            items = resp.get("data", []) if isinstance(resp, dict) else (resp or [])
+            if not items:
+                break
+
+            all_items.extend(items)
+
+            if len(items) < page_size:
+                break
+
+            start += page_size
+
+        return all_items
+
     async def get_item_watch_time_stats(
         self, rating_key: str, media_type: str | None = None, query_days: str = "0"
     ) -> list[dict[str, Any]]:
