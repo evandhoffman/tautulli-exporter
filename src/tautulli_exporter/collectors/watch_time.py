@@ -54,33 +54,59 @@ class WatchTimeCollector(BaseCollector):
             section_id = str(lib.get("section_id", ""))
             library_name = lib.get("section_name", "unknown")
 
-            try:
-                media_table = await self.client.get_library_media_info(
-                    section_id=section_id
-                )
-            except Exception as e:
-                logger.warning(
-                    f"Failed to fetch media info for library {library_name}: {e}"
-                )
-                continue
-
-            # media_table may be either:
-            # - a dict with 'data' being a list of items, or
-            # - a dict with 'data' that is itself a dict containing a 'data' list
-            # - or already be a list
+            # Fetch media info via paginated 'get_library_media_info' calls (start/length)
             items = []
-            if isinstance(media_table, list):
-                items = media_table
-            elif isinstance(media_table, dict):
-                data_field = media_table.get("data")
-                if isinstance(data_field, list):
-                    items = data_field
-                elif isinstance(data_field, dict):
-                    items = data_field.get("data", [])
-                else:
-                    items = []
-            else:
-                items = []
+            page_size = 500
+            start = 0
+            while True:
+                try:
+                    resp = await self.client.get_library_media_info(
+                        section_id=section_id, start=start, length=page_size
+                    )
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to fetch media info page starting at {start} for library {library_name}: {e}"
+                    )
+                    break
+
+                # Normalize response to list of items
+                page_items = []
+                if isinstance(resp, dict):
+                    data_field = resp.get("data")
+                    if isinstance(data_field, list):
+                        page_items = data_field
+                    elif isinstance(data_field, dict):
+                        page_items = data_field.get("data", [])
+                elif isinstance(resp, list):
+                    page_items = resp
+
+                items.extend(page_items)
+
+                try:
+                    logger.debug(
+                        "Library %s (id=%s) page start=%d returned %d items",
+                        library_name,
+                        section_id,
+                        start,
+                        len(page_items),
+                    )
+                except Exception:
+                    pass
+
+                if not page_items or len(page_items) < page_size:
+                    break
+
+                start += page_size
+
+            try:
+                logger.debug(
+                    "Library %s (id=%s) total returned %d items",
+                    library_name,
+                    section_id,
+                    len(items),
+                )
+            except Exception:
+                pass
 
             for item in items:
                 if processed >= self.max_items:
@@ -230,8 +256,18 @@ class WatchTimeCollector(BaseCollector):
             return
 
         # Normalize seasons into an iterable of season dict-like objects or rating keys
-        if isinstance(seasons_resp, dict) and "data" in seasons_resp:
-            seasons = seasons_resp.get("data", [])
+        seasons = []
+        if isinstance(seasons_resp, dict):
+            # Some responses include nested 'data' -> 'children_list' or 'data' -> 'data'
+            data_field = seasons_resp.get("data")
+            if isinstance(data_field, dict) and "children_list" in data_field:
+                seasons = data_field.get("children_list", [])
+            elif isinstance(data_field, dict) and "data" in data_field:
+                seasons = data_field.get("data", [])
+            elif isinstance(data_field, list):
+                seasons = data_field
+            elif "children_list" in seasons_resp:
+                seasons = seasons_resp.get("children_list", [])
         elif isinstance(seasons_resp, list):
             seasons = seasons_resp
         else:
@@ -286,8 +322,18 @@ class WatchTimeCollector(BaseCollector):
                 )
                 continue
 
-            if isinstance(episodes_resp, dict) and "data" in episodes_resp:
-                episodes = episodes_resp.get("data", [])
+            # Normalize episodes response similarly: support 'data'->'children_list' and other shapes
+            episodes = []
+            if isinstance(episodes_resp, dict):
+                data_field = episodes_resp.get("data")
+                if isinstance(data_field, dict) and "children_list" in data_field:
+                    episodes = data_field.get("children_list", [])
+                elif isinstance(data_field, dict) and "data" in data_field:
+                    episodes = data_field.get("data", [])
+                elif isinstance(data_field, list):
+                    episodes = data_field
+                elif "children_list" in episodes_resp:
+                    episodes = episodes_resp.get("children_list", [])
             elif isinstance(episodes_resp, list):
                 episodes = episodes_resp
             else:

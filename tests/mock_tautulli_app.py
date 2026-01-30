@@ -19,6 +19,14 @@ LIBRARY_MEDIA = {
             "last_played": "1700000000",
             "play_count": "2",
             "section_id": 2,
+        },
+        {
+            "rating_key": "2973",
+            "media_type": "show",
+            "title": "Andor",
+            "last_played": "1769740410",
+            "play_count": "1",
+            "section_id": 2,
         }
     ],
     "3": [
@@ -36,7 +44,11 @@ LIBRARY_MEDIA = {
 SEASONS = {
     "S100": [
         {"rating_key": "SE100", "title": "Season 1"},
-    ]
+    ],
+    "2973": [
+        {"rating_key": "2974", "title": "Season 1"},
+        {"rating_key": "8779", "title": "Season 2"},
+    ],
 }
 
 # episodes keyed by season rating_key
@@ -54,7 +66,21 @@ EPISODES = {
             "media_type": "episode",
             "media_index": "2",
         },
-    ]
+    ],
+    "2974": [
+        {
+            "rating_key": "2980",
+            "title": "Kassa",
+            "media_type": "episode",
+            "media_index": "1",
+        },
+        {
+            "rating_key": "2984",
+            "title": "That Would Be Me",
+            "media_type": "episode",
+            "media_index": "2",
+        },
+    ],
 }
 
 # watch time stats
@@ -62,6 +88,8 @@ WATCH_STATS = {
     "E100": [{"query_days": "0", "total_time": 1200}],
     "E101": [{"query_days": "0", "total_time": 600}],
     "M100": [{"query_days": "0", "total_time": 3600}],
+    "2980": [{"query_days": 0, "total_time": 2871, "total_plays": 1}],
+    "2984": [{"query_days": "0", "total_time": 2138}],
 }
 
 
