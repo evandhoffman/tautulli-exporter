@@ -183,18 +183,22 @@ class WatchTimeCollector(BaseCollector):
                                     )
                                     media_type = item.get("media_type", "unknown")
 
-                if media_type == "show":
-                    # Drill down into show -> seasons -> episodes
-                    await self._process_show(
-                        rating_key, title, library_name, show_totals
-                    )
-                else:
-                    # For movies and other media types, get watch time directly
-                    await self._process_item(
-                        rating_key, title, media_type, library_name, show_totals
-                    )
+                                    if media_type == "show":
+                                        # Drill down into show -> seasons -> episodes
+                                        await self._process_show(
+                                            rating_key, title, library_name, show_totals
+                                        )
+                                    else:
+                                        # For movies and other media types, get watch time directly
+                                        await self._process_item(
+                                            rating_key,
+                                            title,
+                                            media_type,
+                                            library_name,
+                                            show_totals,
+                                        )
 
-                processed += 1
+                                    processed += 1
 
         # Publish aggregated show-level totals
         try:
