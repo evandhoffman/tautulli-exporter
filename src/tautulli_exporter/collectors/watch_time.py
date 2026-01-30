@@ -64,141 +64,51 @@ class WatchTimeCollector(BaseCollector):
 
             for item in items:
                 if processed >= self.max_items:
-                    """Collector for per-item and per-show watch time metrics."""
+                    logger.info(
+                        "WatchTimeCollector reached max_items cap: processed=%d max_items=%d (stopping, library=%s)",
+                        processed,
+                        self.max_items,
+                        library_name,
+                    )
+                    return
 
-                    import logging
-                    from typing import Any
+                try:
+                    play_count = int(item.get("play_count", 0) or 0)
+                except Exception:
+                    play_count = 0
 
-                    from ..metrics import ITEM_WATCH_SECONDS, SHOW_WATCH_SECONDS
-                    from ..tautulli_client import TautulliClient
-                    from .base import BaseCollector
+                if play_count <= 0:
+                    try:
+                        logger.debug(
+                            "Skipping item with no plays: rating_key=%s title=%s library=%s",
+                            item.get("rating_key"),
+                            item.get("title") or item.get("full_title"),
+                            library_name,
+                        )
+                    except Exception:
+                        pass
+                    continue
 
-                    logger = logging.getLogger(__name__)
+                rating_key = str(item.get("rating_key", ""))
+                title = item.get("title") or item.get("full_title") or "unknown"
+                media_type = item.get("media_type", "unknown")
 
-                    class WatchTimeCollector(BaseCollector):
-                        """Collects seconds watched per episode and per show.
+                if media_type == "show":
+                    # Drill down into show -> seasons -> episodes
+                    await self._process_show(
+                        rating_key, title, library_name, show_totals
+                    )
+                # Process the item itself (show, movie, episode)
+                await self._process_item(
+                    item,
+                    rating_key,
+                    title,
+                    media_type,
+                    library_name,
+                    show_totals,
+                )
 
-                        Strategy:
-                        - For each library, fetch media info entries via `get_library_media_info`.
-                        - Filter items with `play_count > 0` to avoid unplayed items.
-                        - For each qualifying item (episode or show), call
-                          `get_item_watch_time_stats` with `query_days=0` (all time) and set metric.
-
-                        Note: This may be expensive on large libraries; config can disable it.
-                        """
-
-                        name = "watch_time"
-
-                        def __init__(
-                            self, client: TautulliClient, max_items: int = 500
-                        ):
-                            super().__init__(client)
-                            self.max_items = max_items
-                            try:
-                                logger.info(
-                                    "WatchTimeCollector initialized: max_items=%d, client=%s",
-                                    self.max_items,
-                                    getattr(client, "base_url", repr(client)),
-                                )
-                            except Exception:
-                                logger.debug(
-                                    "WatchTimeCollector initialization log failed"
-                                )
-
-                        async def collect(self) -> None:
-                            # Get libraries
-                            libs = await self.client.get_libraries()
-
-                            processed = 0
-                            # aggregate per-show totals: key -> seconds
-                            show_totals: dict[tuple[str, str, str, str], int] = {}
-
-                            try:
-                                logger.debug(
-                                    "WatchTimeCollector starting collect: max_items=%d libraries=%d",
-                                    self.max_items,
-                                    len(libs),
-                                )
-                            except Exception:
-                                pass
-
-                            for lib in libs:
-                                section_id = str(lib.get("section_id", ""))
-                                library_name = lib.get("section_name", "unknown")
-
-                                try:
-                                    items = (
-                                        await self.client.get_library_media_info_all(
-                                            section_id=section_id
-                                        )
-                                    )
-                                except Exception as e:
-                                    logger.warning(
-                                        f"Failed to fetch media info for library {library_name}: {e}"
-                                    )
-                                    continue
-                                try:
-                                    logger.debug(
-                                        "Library %s (id=%s) returned %d items (paged)",
-                                        library_name,
-                                        section_id,
-                                        len(items),
-                                    )
-                                except Exception:
-                                    pass
-
-                                for item in items:
-                                    if processed >= self.max_items:
-                                        logger.info(
-                                            "WatchTimeCollector reached max_items cap: processed=%d max_items=%d (stopping, library=%s)",
-                                            processed,
-                                            self.max_items,
-                                            library_name,
-                                        )
-                                        return
-
-                                    try:
-                                        play_count = int(item.get("play_count", 0) or 0)
-                                    except Exception:
-                                        play_count = 0
-
-                                    if play_count <= 0:
-                                        try:
-                                            logger.debug(
-                                                "Skipping item with no plays: rating_key=%s title=%s library=%s",
-                                                item.get("rating_key"),
-                                                item.get("title")
-                                                or item.get("full_title"),
-                                                library_name,
-                                            )
-                                        except Exception:
-                                            pass
-                                        continue
-
-                                    rating_key = str(item.get("rating_key", ""))
-                                    title = (
-                                        item.get("title")
-                                        or item.get("full_title")
-                                        or "unknown"
-                                    )
-                                    media_type = item.get("media_type", "unknown")
-
-                                    if media_type == "show":
-                                        # Drill down into show -> seasons -> episodes
-                                        await self._process_show(
-                                            rating_key, title, library_name, show_totals
-                                        )
-                                    else:
-                                        # For movies and other media types, get watch time directly
-                                        await self._process_item(
-                                            rating_key,
-                                            title,
-                                            media_type,
-                                            library_name,
-                                            show_totals,
-                                        )
-
-                                    processed += 1
+                processed += 1
 
         # Publish aggregated show-level totals
         try:
@@ -331,6 +241,7 @@ class WatchTimeCollector(BaseCollector):
 
     async def _process_item(
         self,
+        item: dict[str, Any],
         rating_key: str,
         title: str,
         media_type: str,
@@ -389,10 +300,22 @@ class WatchTimeCollector(BaseCollector):
             # Ensure logging errors don't interrupt collection
             logger.debug("Failed to log item watch info")
 
-        # For non-episodes, aggregate into show-level totals (though for movies, show_key = rating_key)
-        show_key = rating_key
-        show_title_agg = title
-        show_media_type = media_type
+        # Aggregate into show-level totals
+        if media_type == "episode":
+            show_key = str(
+                item.get("grandparent_rating_key") or item.get("grandparent_key") or ""
+            )
+            show_title_agg = (
+                item.get("grandparent_title")
+                or item.get("grandparent_full_title")
+                or item.get("grandparent")
+                or "unknown"
+            )
+            show_media_type = "show"
+        else:
+            show_key = rating_key
+            show_title_agg = title
+            show_media_type = media_type
 
         show_id = (show_key, show_title_agg[:100], show_media_type, library_name)
         show_totals[show_id] = show_totals.get(show_id, 0) + total_seconds
