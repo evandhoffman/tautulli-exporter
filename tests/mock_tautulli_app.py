@@ -106,13 +106,13 @@ async def api(cmd: str = Query(...), apikey: str = Query(None), **params: Any):
 
     if cmd == "get_children_metadata":
         rating_key = str(params.get("rating_key", ""))
-        # Return seasons or episodes
+        # Return seasons or episodes using the `data.children_list` shape (as in your samples)
         if rating_key in SEASONS:
-            return {"response": {"result": "success", "data": SEASONS[rating_key]}}
+            return {"response": {"result": "success", "data": {"children_list": SEASONS[rating_key]}}}
         if rating_key in EPISODES:
-            return {"response": {"result": "success", "data": EPISODES[rating_key]}}
+            return {"response": {"result": "success", "data": {"children_list": EPISODES[rating_key]}}}
         # as fallback, return empty list
-        return {"response": {"result": "success", "data": []}}
+        return {"response": {"result": "success", "data": {"children_list": []}}}
 
     if cmd == "get_item_watch_time_stats":
         rating_key = str(params.get("rating_key", ""))
