@@ -520,20 +520,35 @@ class WatchTimeCollector(BaseCollector):
                 except Exception:
                     logger.debug("Failed to set/remove ITEM_WATCH_SECONDS for episode")
 
-                # Set explicit episode metric with richer labels
+                # Set explicit episode metric with richer labels (only if > 0)
                 try:
-                    EPISODE_WATCH_SECONDS.labels(
-                        library_name=library_name,
-                        rating_key=episode_rating_key,
-                        title=episode_title[:100],
-                        parent_title=season_title[:100],
-                        grandparent_title=show_title[:100],
-                        media_index=str(media_index),
-                        section_id=str(section_id),
-                    ).set(total_seconds)
+                    if total_seconds > 0:
+                        EPISODE_WATCH_SECONDS.labels(
+                            library_name=library_name,
+                            rating_key=episode_rating_key,
+                            title=episode_title[:100],
+                            parent_title=season_title[:100],
+                            grandparent_title=show_title[:100],
+                            media_index=str(media_index),
+                            section_id=str(section_id),
+                        ).set(total_seconds)
+                    else:
+                        # Remove any previous metric for this episode labelset
+                        try:
+                            EPISODE_WATCH_SECONDS.remove(
+                                library_name,
+                                episode_rating_key,
+                                episode_title[:100],
+                                season_title[:100],
+                                show_title[:100],
+                                str(media_index),
+                                str(section_id),
+                            )
+                        except Exception:
+                            pass
                     try:
                         logger.debug(
-                            "Set EPISODE_WATCH_SECONDS: %s (%s) parent=%s grandparent=%s seconds=%d",
+                            "Set/Removed EPISODE_WATCH_SECONDS: %s (%s) parent=%s grandparent=%s seconds=%d",
                             episode_title,
                             episode_rating_key,
                             season_title,
@@ -543,7 +558,7 @@ class WatchTimeCollector(BaseCollector):
                     except Exception:
                         pass
                 except Exception:
-                    logger.debug("Failed to set EPISODE_WATCH_SECONDS metric")
+                    logger.debug("Failed to set/remove EPISODE_WATCH_SECONDS metric")
 
                 # Log episode watch time
                 try:
@@ -668,18 +683,32 @@ class WatchTimeCollector(BaseCollector):
                     pass
             else:
                 try:
-                    EPISODE_WATCH_SECONDS.labels(
-                        library_name=library_name,
-                        rating_key=rating_key,
-                        title=title[:100],
-                        parent_title=parent_title[:100],
-                        grandparent_title=grandparent_title[:100],
-                        media_index=str(media_index),
-                        section_id=str(section_id),
-                    ).set(total_seconds)
+                    if total_seconds > 0:
+                        EPISODE_WATCH_SECONDS.labels(
+                            library_name=library_name,
+                            rating_key=rating_key,
+                            title=title[:100],
+                            parent_title=parent_title[:100],
+                            grandparent_title=grandparent_title[:100],
+                            media_index=str(media_index),
+                            section_id=str(section_id),
+                        ).set(total_seconds)
+                    else:
+                        try:
+                            EPISODE_WATCH_SECONDS.remove(
+                                library_name,
+                                rating_key,
+                                title[:100],
+                                parent_title[:100],
+                                grandparent_title[:100],
+                                str(media_index),
+                                str(section_id),
+                            )
+                        except Exception:
+                            pass
                 except Exception:
                     logger.debug(
-                        "Failed to set EPISODE_WATCH_SECONDS for top-level episode"
+                        "Failed to set/remove EPISODE_WATCH_SECONDS for top-level episode"
                     )
 
         # Log each played item with >0 seconds
