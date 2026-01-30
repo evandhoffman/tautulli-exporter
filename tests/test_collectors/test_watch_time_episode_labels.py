@@ -13,8 +13,12 @@ async def test_episode_metric_labels_and_value(mock_client, sample_libraries_res
     mock_client.get_libraries = AsyncMock(return_value=sample_libraries_response)
 
     # Return Andor show from library media info
-    media_items = [m for m in LIBRARY_MEDIA.get("2", []) if m.get("rating_key") == "2973"]
-    mock_client.get_library_media_info = AsyncMock(return_value={"data": {"data": media_items}})
+    media_items = [
+        m for m in LIBRARY_MEDIA.get("2", []) if m.get("rating_key") == "2973"
+    ]
+    mock_client.get_library_media_info = AsyncMock(
+        return_value={"data": {"data": media_items}}
+    )
 
     # children and stats provided by our mock app data
     async def fake_children(rk):
@@ -61,7 +65,9 @@ async def test_episode_metric_labels_and_value(mock_client, sample_libraries_res
             found = (labels, value)
             break
 
-    assert found is not None, f"Expected to find EPISODE_WATCH_SECONDS matching {expected}"
+    assert (
+        found is not None
+    ), f"Expected to find EPISODE_WATCH_SECONDS matching {expected}"
 
     labels, value = found
     assert int(value) == 2871

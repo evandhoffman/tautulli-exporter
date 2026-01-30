@@ -377,6 +377,11 @@ class WatchTimeCollector(BaseCollector):
 
             for episode in episodes:
                 # episode may be a dict or a rating_key string
+                episode_rating_key = None
+                episode_title = "unknown"
+                media_index = ""
+                last_viewed = None
+
                 if isinstance(episode, dict):
                     media_type_val = episode.get("media_type") or episode.get("type")
                     if media_type_val and str(media_type_val) != "episode":
@@ -387,15 +392,60 @@ class WatchTimeCollector(BaseCollector):
                     )
                     episode_title = episode.get("title", "unknown")
                     media_index = episode.get("media_index", "")
+                    # Accept multiple possible last-viewed field names
+                    last_viewed = (
+                        episode.get("last_viewed_at")
+                        or episode.get("last_viewed")
+                        or episode.get("last_played")
+                    )
                 elif isinstance(episode, (str, int)):
                     episode_rating_key = str(episode)
                     episode_title = "unknown"
                     media_index = ""
+                    # Try to fetch episode details to determine last_viewed
+                    try:
+                        ep_info = await self.client.get_library_media_info(
+                            section_id=section_id, rating_key=episode_rating_key
+                        )
+                        if isinstance(ep_info, dict):
+                            data = ep_info.get("data") or {}
+                            # data may be a list or dict
+                            if isinstance(data, list) and data:
+                                ep = data[0]
+                            elif isinstance(data, dict) and "data" in data:
+                                ep_list = data.get("data", [])
+                                ep = ep_list[0] if ep_list else None
+                            else:
+                                ep = None
+
+                            if isinstance(ep, dict):
+                                episode_title = ep.get("title", episode_title)
+                                media_index = ep.get("media_index", media_index)
+                                last_viewed = (
+                                    ep.get("last_viewed_at")
+                                    or ep.get("last_viewed")
+                                    or ep.get("last_played")
+                                )
+                    except Exception:
+                        # If we can't fetch details, continue and skip based on missing last_viewed
+                        last_viewed = None
                 else:
                     logger.debug("Skipping unexpected episode type: %s", type(episode))
                     continue
 
                 if not episode_rating_key:
+                    continue
+
+                # Skip episodes without a last_viewed timestamp
+                if last_viewed in (None, "", 0, "0"):
+                    try:
+                        logger.debug(
+                            "Skipping episode with no last_viewed: %s (%s)",
+                            episode_title,
+                            episode_rating_key,
+                        )
+                    except Exception:
+                        pass
                     continue
 
                 # Get watch time stats for the episode
@@ -563,20 +613,36 @@ class WatchTimeCollector(BaseCollector):
             )
             media_index = item.get("media_index", "")
 
-            try:
-                EPISODE_WATCH_SECONDS.labels(
-                    library_name=library_name,
-                    rating_key=rating_key,
-                    title=title[:100],
-                    parent_title=parent_title[:100],
-                    grandparent_title=grandparent_title[:100],
-                    media_index=str(media_index),
-                    section_id=str(section_id),
-                ).set(total_seconds)
-            except Exception:
-                logger.debug(
-                    "Failed to set EPISODE_WATCH_SECONDS for top-level episode"
-                )
+            # Only export episode metric if last_viewed is present
+            last_viewed = (
+                item.get("last_viewed_at")
+                or item.get("last_viewed")
+                or item.get("last_played")
+            )
+            if last_viewed in (None, "", 0, "0"):
+                try:
+                    logger.debug(
+                        "Skipping top-level episode with no last_viewed: %s (%s)",
+                        title,
+                        rating_key,
+                    )
+                except Exception:
+                    pass
+            else:
+                try:
+                    EPISODE_WATCH_SECONDS.labels(
+                        library_name=library_name,
+                        rating_key=rating_key,
+                        title=title[:100],
+                        parent_title=parent_title[:100],
+                        grandparent_title=grandparent_title[:100],
+                        media_index=str(media_index),
+                        section_id=str(section_id),
+                    ).set(total_seconds)
+                except Exception:
+                    logger.debug(
+                        "Failed to set EPISODE_WATCH_SECONDS for top-level episode"
+                    )
 
         # Log each played item with >0 seconds
         try:

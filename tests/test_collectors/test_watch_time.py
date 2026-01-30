@@ -38,6 +38,7 @@ async def test_collect_drilldown_and_item_processing(
             "play_count": "1",
             "grandparent_rating_key": "S1",
             "grandparent_title": "Test Show",
+            "last_viewed_at": "1610000001",
         },
     ]
 
@@ -56,6 +57,7 @@ async def test_collect_drilldown_and_item_processing(
                     "title": "Episode 2",
                     "media_type": "episode",
                     "media_index": "2",
+                    "last_viewed_at": "1610000002",
                 }
             ]
         )

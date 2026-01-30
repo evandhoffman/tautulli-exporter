@@ -46,18 +46,22 @@ async def test_children_list_shape_is_handled(mock_client, sample_libraries_resp
                     "rating_key": "E2974_1",
                     "title": "Episode 1",
                     "media_index": "1",
+                    "last_viewed_at": "1700000000",
                 },
                 {
                     "media_type": "episode",
                     "rating_key": "E2974_2",
                     "title": "Episode 2",
                     "media_index": "2",
+                    "last_viewed_at": "1700000001",
                 },
             ]
         }
     }
 
-    mock_client.get_children_metadata = AsyncMock(side_effect=lambda rk: seasons_resp if rk == "2973" else episodes_resp)
+    mock_client.get_children_metadata = AsyncMock(
+        side_effect=lambda rk: seasons_resp if rk == "2973" else episodes_resp
+    )
 
     async def fake_stats(rating_key, media_type=None, query_days="0"):
         if rating_key in ("E2974_1", "E2974_2"):

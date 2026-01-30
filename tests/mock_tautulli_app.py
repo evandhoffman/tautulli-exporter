@@ -27,7 +27,7 @@ LIBRARY_MEDIA = {
             "last_played": "1769740410",
             "play_count": "1",
             "section_id": 2,
-        }
+        },
     ],
     "3": [
         {
@@ -59,12 +59,14 @@ EPISODES = {
             "title": "Pilot",
             "media_type": "episode",
             "media_index": "1",
+            "last_viewed_at": 1700000000,
         },
         {
             "rating_key": "E101",
             "title": "Second",
             "media_type": "episode",
             "media_index": "2",
+            "last_viewed_at": 1700000001,
         },
     ],
     "2974": [
@@ -73,12 +75,14 @@ EPISODES = {
             "title": "Kassa",
             "media_type": "episode",
             "media_index": "1",
+            "last_viewed_at": 1769740410,
         },
         {
             "rating_key": "2984",
             "title": "That Would Be Me",
             "media_type": "episode",
             "media_index": "2",
+            # intentionally no last_viewed_at to simulate un-viewed episode
         },
     ],
 }
@@ -108,9 +112,19 @@ async def api(cmd: str = Query(...), apikey: str = Query(None), **params: Any):
         rating_key = str(params.get("rating_key", ""))
         # Return seasons or episodes using the `data.children_list` shape (as in your samples)
         if rating_key in SEASONS:
-            return {"response": {"result": "success", "data": {"children_list": SEASONS[rating_key]}}}
+            return {
+                "response": {
+                    "result": "success",
+                    "data": {"children_list": SEASONS[rating_key]},
+                }
+            }
         if rating_key in EPISODES:
-            return {"response": {"result": "success", "data": {"children_list": EPISODES[rating_key]}}}
+            return {
+                "response": {
+                    "result": "success",
+                    "data": {"children_list": EPISODES[rating_key]},
+                }
+            }
         # as fallback, return empty list
         return {"response": {"result": "success", "data": {"children_list": []}}}
 

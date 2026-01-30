@@ -29,7 +29,14 @@ async def test_show_with_zero_playcount_but_episodes_played(
         side_effect=lambda rk: (
             [{"rating_key": "SE3", "title": "Season 1"}]
             if rk == "S3"
-            else [{"rating_key": "E4", "title": "Episode 4", "media_type": "episode"}]
+            else [
+                {
+                    "rating_key": "E4",
+                    "title": "Episode 4",
+                    "media_type": "episode",
+                    "last_viewed_at": "1600000000",
+                }
+            ]
         )
     )
 

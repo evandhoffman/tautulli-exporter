@@ -28,7 +28,14 @@ async def test_drill_all_shows_enabled(
         side_effect=lambda rk: (
             [{"rating_key": "SE5", "title": "Season 1"}]
             if rk == "S5"
-            else [{"rating_key": "E6", "title": "Episode 6", "media_type": "episode"}]
+            else [
+                {
+                    "rating_key": "E6",
+                    "title": "Episode 6",
+                    "media_type": "episode",
+                    "last_viewed_at": "1700000000",
+                }
+            ]
         )
     )
 

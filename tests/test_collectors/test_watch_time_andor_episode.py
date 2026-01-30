@@ -13,9 +13,13 @@ async def test_andor_episode_watch_time(mock_client, sample_libraries_response):
     mock_client.get_libraries = AsyncMock(return_value=sample_libraries_response)
 
     # Return Andor show from library media info
-    media_items = [m for m in LIBRARY_MEDIA.get("2", []) if m.get("rating_key") == "2973"]
+    media_items = [
+        m for m in LIBRARY_MEDIA.get("2", []) if m.get("rating_key") == "2973"
+    ]
     mock_client.get_library_media_info_all = AsyncMock(return_value=media_items)
-    mock_client.get_library_media_info = AsyncMock(return_value={"data": {"data": media_items}})
+    mock_client.get_library_media_info = AsyncMock(
+        return_value={"data": {"data": media_items}}
+    )
 
     # children and stats are handled by tests.mock_tautulli_app data via previous tests
     async def fake_children(rk):

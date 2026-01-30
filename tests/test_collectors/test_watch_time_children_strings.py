@@ -31,6 +31,30 @@ async def test_children_metadata_returns_strings(
         side_effect=lambda rk: ["SE2"] if rk == "S2" else ["E3"]
     )
 
+    # When episodes are returned as strings, the collector will call
+    # get_library_media_info to fetch episode details (including last_viewed_at)
+    # get_library_media_info should return library list when called for the library,
+    # and episode details when called with rating_key='E3'. Use side_effect to handle both.
+    def lib_media_side_effect(section_id=None, rating_key=None, **kwargs):
+        if rating_key == "E3":
+            return {
+                "data": [
+                    {
+                        "rating_key": "E3",
+                        "media_type": "episode",
+                        "title": "E3",
+                        "media_index": "1",
+                        "last_viewed_at": "1700000000",
+                        "section_id": "2",
+                        "parent_title": "Season 1",
+                        "grandparent_title": "String Show",
+                    }
+                ]
+            }
+        return {"data": media_items}
+
+    mock_client.get_library_media_info = AsyncMock(side_effect=lib_media_side_effect)
+
     async def fake_stats(rating_key, media_type=None, query_days="0"):
         if rating_key in ("E3",):
             return [{"query_days": "0", "total_time": 900}]
