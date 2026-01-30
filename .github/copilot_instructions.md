@@ -79,6 +79,18 @@ Follow Prometheus naming conventions:
 - Include unit in name (e.g., `_seconds`, `_bytes`, `_total`)
 - Counters end with `_total`
 
+## Watch-time metrics and behavior
+- Prefer aggregated and actionable watch-time metrics:
+  - `tautulli_show_watch_seconds` (per-show aggregated seconds)
+  - `tautulli_episode_watch_seconds` (explicit per-episode seconds)
+- `tautulli_item_watch_seconds` has been removed in favor of the above (reduces cardinality and avoids redundant per-item metrics).
+- Export rules:
+  - Episode metrics are exported **only** when the episode has a non-empty `last_viewed_at` and the measured seconds are > 0.
+  - Show/episode metrics are **suppressed/removed** when their value is 0 so dashboards don't show noisy zeros.
+
+## Dashboard conventions
+- Dashboards in this repo use `tautulli-dashboard.json` and favor **Stat/Gauge** panels over tables for core content insights (Top Shows/Episodes, Top Users/Libraries).
+- Use `topk(N, metric)` queries for 
 ### Core Metrics to Implement
 
 ```python
@@ -275,7 +287,11 @@ See [docs/tautulli_api.md](../docs/tautulli_api.md) for complete API documentati
 - [ ] Grafana dashboard JSON
 - [ ] Helm chart (optional)
 
-**Dashboard Sync:** When adding, renaming, or removing exporter metrics, update `tautulli-dashboard.json` to reflect the new metric names and label usage. Keep dashboard queries and panel IDs consistent with metric names; include a quick example of new queries in the PR description so reviewers can verify visualizations.
+**Dashboard Sync:** When adding, renaming, or removing exporter metrics, update `tautulli-dashboard.json` to reflect the new metric names and label usage. Dashboard guidance:
+- Prefer **Stat** or small **Gauge** panels (avoid tables for core content lists).
+- For duration/seconds metrics, set `fieldConfig.defaults.unit` to **`dtdurations`**.
+- Use `topk(N, metric)` and reduce options (e.g., `lastNotNull`) for Stat panels to surface the top items and avoid multi-series ambiguity.
+- Include example queries and panel IDs in the PR description to help reviewers validate the visualizations.
 
 ---
 

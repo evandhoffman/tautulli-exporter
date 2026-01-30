@@ -190,6 +190,9 @@ The exporter can collect detailed watch-time metrics per media item (episodes/mo
 **Metrics**:
 
 - `tautulli_show_watch_seconds{show_rating_key,show_title,media_type,library_name}`: Aggregated total seconds watched per show (episodes summed) or per-movie.
+- `tautulli_episode_watch_seconds{rating_key,title,parent_title,grandparent_title,media_index,section_id,library_name}`: Total seconds watched per episode. **Exported only if an episode's `last_viewed_at` is set and the measured seconds are > 0.**
+
+Note: `tautulli_item_watch_seconds` (per-item metric) has been removed — prefer aggregated show metrics or explicit episode metrics to reduce cardinality.
 
 ### Episode Drilldown Algorithm
 

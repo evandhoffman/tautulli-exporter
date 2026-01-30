@@ -62,6 +62,13 @@ services:
 | `tautulli_library_items_count` | Gauge | name, type | Library item counts |
 | `tautulli_library_plays_total` | Counter | name | Total library plays |
 
+### Watch-time Metrics
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
+| `tautulli_show_watch_seconds` | Gauge | show_rating_key, show_title, media_type, library_name | Total seconds watched aggregated per show or movie (exported only when > 0) |
+| `tautulli_episode_watch_seconds` | Gauge | rating_key, title, parent_title, grandparent_title, media_index, section_id, library_name | Total seconds watched per episode (exported only if `last_viewed_at` is present and > 0) |
+
+Note: `tautulli_item_watch_seconds` has been removed (we prefer aggregated show-level metrics and explicit episode metrics). Seconds-based watch metrics in the dashboard use the `dtdurations` unit for human-readable durations.
 ### User Metrics
 | Metric | Type | Labels | Description |
 |--------|------|--------|-------------|
@@ -121,7 +128,7 @@ pytest tests/ -v --cov=src/tautulli_exporter
 
 ## Grafana Dashboard
 
-A sample Grafana dashboard is provided in `grafana/dashboard.json`.
+A sample Grafana dashboard is provided in `tautulli-dashboard.json` (root). The dashboard focuses on content insights (Top Shows/Episodes, Top Users/Libraries) using **Stat/Gauge** panels (no tables) and displays duration metrics with the `dtdurations` unit for readable days/hours/minutes.
 
 ## License
 
