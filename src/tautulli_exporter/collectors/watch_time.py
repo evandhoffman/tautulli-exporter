@@ -105,7 +105,16 @@ class WatchTimeCollector(BaseCollector):
                 # For shows: follow the algorithm — only drill into shows where last_played is not null
                 if media_type == "show":
                     last_played = item.get("last_played")
-                    if last_played in (None, "", 0, "0"):
+                    # Optionally allow drilling into all shows via config
+                    from ..config import get_settings
+
+                    drill_all = False
+                    try:
+                        drill_all = get_settings().watch_time_drill_all_shows
+                    except Exception:
+                        pass
+
+                    if last_played in (None, "", 0, "0") and not drill_all:
                         try:
                             logger.debug(
                                 "Skipping show with no last_played: rating_key=%s title=%s library=%s",
@@ -127,6 +136,15 @@ class WatchTimeCollector(BaseCollector):
                         )
                         processed += 1
                         continue
+                    elif last_played in (None, "", 0, "0") and drill_all:
+                        try:
+                            logger.info(
+                                "Drilling show %s (%s) despite missing last_played due to config",
+                                title,
+                                rating_key,
+                            )
+                        except Exception:
+                            pass
                 else:
                     # Non-show items: skip if no plays
                     if play_count <= 0:
